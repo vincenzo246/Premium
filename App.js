@@ -706,25 +706,14 @@ const [selectedId, setSelectedId] = useState(null);
   // =====================
   function PlanPage() {
     return (
-      <View style={{ padding: 12 }}>
-
-  <Card>
-    <Text style={{ fontWeight: "900", fontSize: 22, color: "#111827" }}>
-      Builder Planner Prototype
-    </Text>
-
-    <Text style={{ color: "#6B7280", marginTop: 6 }}>
-      Drag/resize rooms in metres → QS + totals update live.
-    </Text>
-  </Card>
-
-</View>
-
-
-      
-      
-        
-          
+      <ScrollView
+  contentContainerStyle={{ padding: 12, paddingBottom: 40 }}
+  scrollEnabled={!isDragging}
+  keyboardShouldPersistTaps="handled"
+>
+        <Card>
+          <Text style={{ fontWeight: "900", fontSize: 22, color: "#111827" }}>Builder Planner Prototype</Text>
+          <Text style={{ color: "#6B7280", marginTop: 6 }}>
             Drag/resize rooms in metres → QS + totals update live. (Prices editable + user overrides supported.)
           </Text>
         </Card>
@@ -912,7 +901,7 @@ const [selectedId, setSelectedId] = useState(null);
     }
 
     return (
-      <ScrollView scrollEnabled={false}{{ padding: 12, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
         <Card>
           <Text style={{ fontWeight: "900", fontSize: 20, color: "#111827" }}>Select Materials</Text>
           <Text style={{ color: "#6B7280", marginTop: 6 }}>
