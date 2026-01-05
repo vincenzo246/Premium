@@ -9,6 +9,7 @@ import {
   Dimensions,
   Alert,
 } from "react-native";
+import IsoMassing from "./components/three/isomassing";
 
 const SCREEN = Dimensions.get("window");
 
@@ -395,6 +396,7 @@ const [selectedId, setSelectedId] = useState(null);
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onPanResponderGrant: () => {
+          setIsDragging(true);
           startRef.current = { x: room.x_m, y: room.y_m, w: room.w_m, d: room.d_m };
         },
         onPanResponderMove: (_, g) => {
@@ -415,6 +417,9 @@ const [selectedId, setSelectedId] = useState(null);
             )
           );
         },
+        onPanResponderRelease: () => {
+          setIsDragging(false);
+        },
       })
     ).current;
 
@@ -422,6 +427,7 @@ const [selectedId, setSelectedId] = useState(null);
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,onMoveShouldSetPanResponder: () => true,
         onPanResponderGrant: () => {
+          setIsDragging(true);
           startRef.current = { x: room.x_m, y: room.y_m, w: room.w_m, d: room.d_m };
         },
         onPanResponderMove: (_, g) => {
@@ -442,6 +448,9 @@ const [selectedId, setSelectedId] = useState(null);
                 : r
             )
           );
+        },
+        onPanResponderRelease: () => {
+          setIsDragging(false);
         },
       })
     ).current;
@@ -547,122 +556,6 @@ const [selectedId, setSelectedId] = useState(null);
     return <View style={{ position: "absolute", left: 0, top: 0, width: canvas.w, height: canvas.h }}>{lines}</View>;
   }
 
-  // =====================
-  // 3D MASSING (NO 3D LIBS)
-  // Isometric projection using transforms.
-  // =====================
-  function IsoMassing() {
-    // A simple “architectural massing” view:
-    // Each room becomes a block (top + two sides) in isometric.
-    // Not photoreal – but looks legit and proves the concept.
-
-    const isoScale = 0.75;
-    const heightPx = WALL_H_M * 10; // visual height (not 1:1)
-    const originX = 40;
-    const originY = 120;
-
-    function isoPoint(x, y) {
-      // basic isometric mapping
-      const ix = (x - y) * 0.7;
-      const iy = (x + y) * 0.35;
-      return { ix, iy };
-    }
-
-    const blocks = rooms.map((r) => {
-      const x = r.x_m * PX_PER_M;
-      const y = r.y_m * PX_PER_M;
-      const w = r.w_m * PX_PER_M;
-      const d = r.d_m * PX_PER_M;
-
-      const p = isoPoint(x, y);
-      const topLeft = { x: originX + p.ix, y: originY + p.iy };
-
-      const topStyle = {
-        position: "absolute",
-        left: topLeft.x,
-        top: topLeft.y,
-        width: w,
-        height: d,
-        backgroundColor: "rgba(17,24,39,0.10)",
-        borderWidth: 1,
-        borderColor: "rgba(17,24,39,0.35)",
-        transform: [
-          { scaleX: isoScale },
-          { scaleY: isoScale },
-          { skewX: "-25deg" },
-          { rotateZ: "45deg" },
-        ],
-        borderRadius: 6,
-      };
-
-      const sideA = {
-        position: "absolute",
-        left: topLeft.x + (w * isoScale) * 0.35,
-        top: topLeft.y + (d * isoScale) * 0.55,
-        width: w * 0.75,
-        height: heightPx,
-        backgroundColor: "rgba(17,24,39,0.16)",
-        borderWidth: 1,
-        borderColor: "rgba(17,24,39,0.25)",
-        transform: [{ skewY: "20deg" }],
-        borderRadius: 6,
-      };
-
-      const sideB = {
-        position: "absolute",
-        left: topLeft.x - (d * isoScale) * 0.15,
-        top: topLeft.y + (d * isoScale) * 0.55,
-        width: d * 0.55,
-        height: heightPx,
-        backgroundColor: "rgba(17,24,39,0.12)",
-        borderWidth: 1,
-        borderColor: "rgba(17,24,39,0.22)",
-        transform: [{ skewY: "-18deg" }],
-        borderRadius: 6,
-      };
-
-      return (
-        <View key={r.id} style={{ position: "absolute", left: 0, top: 0 }}>
-          <View style={sideB} />
-          <View style={sideA} />
-          <View style={topStyle} />
-        </View>
-      );
-    });
-
-    return (
-      <Card>
-        <Text style={{ fontWeight: "900", fontSize: 16, marginBottom: 6, color: "#111827" }}>
-          3D Preview (Architectural massing)
-        </Text>
-        <Text style={{ color: "#6B7280", marginBottom: 10 }}>
-          This is a clean massing model driven by your plan (no heavy 3D libraries in Snack). Expo will upgrade this to true 3D.
-        </Text>
-
-        <View
-          style={{
-            height: 320,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: "#E5E7EB",
-            backgroundColor: "#F9FAFB",
-            overflow: "hidden",
-          }}
-        >
-          {blocks}
-
-          <View style={{ position: "absolute", left: 12, bottom: 12, backgroundColor: "white", padding: 10, borderRadius: 12, borderWidth: 1, borderColor: "#E5E7EB" }}>
-            <Text style={{ fontWeight: "900", color: "#111827" }}>
-              Total: {money(costs.styledTotal)}
-            </Text>
-            <Text style={{ color: "#6B7280", fontSize: 12 }}>
-              Floor: {m2(qs.totalFloorArea_m2)} • Storeys: {storeys} • Height: {WALL_H_M}m
-            </Text>
-          </View>
-        </View>
-      </Card>
-    );
-  }
 
   // =====================
   // PRICE EDITOR
@@ -1099,7 +992,15 @@ const [selectedId, setSelectedId] = useState(null);
   function ThreeDPage() {
     return (
       <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
-        <IsoMassing />
+        <Card>
+          <Text style={{ fontWeight: "900", fontSize: 16, marginBottom: 6, color: "#111827" }}>
+            3D Preview (Architectural massing)
+          </Text>
+          <Text style={{ color: "#6B7280", marginBottom: 10 }}>
+            This is a clean massing model driven by your plan (no heavy 3D libraries in Snack). Expo will upgrade this to true 3D.
+          </Text>
+          <IsoMassing rooms={rooms} costs={costs} qs={qs} storeys={storeys} />
+        </Card>
 
         <Card>
           <Text style={{ fontWeight: "900", fontSize: 16, color: "#111827" }}>Final Product</Text>
